@@ -82,6 +82,7 @@ async function handleSubmit() {
 
   setPostUploading(false);
   setIsOpen(false);
+  location.reload();
 
 }
 
