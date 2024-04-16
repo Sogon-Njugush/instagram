@@ -1,7 +1,10 @@
+import Feed from "@/components/Feed";
+import Posts from "@/components/Posts";
+
 export default function Home() {
   return (
-    <main className="">
-      <h1>Hello home</h1>
-    </main>
+   <>
+  <Feed/>
+   </>
   );
 }
