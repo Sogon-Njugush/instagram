@@ -9,6 +9,7 @@ import { HiCamera } from "react-icons/hi";
 import { AiOutlineClose } from "react-icons/ai";
 import { app } from '@/firebase';
 import {getDownloadURL, getStorage, ref, uploadBytesResumable} from 'firebase/storage';
+import {addDoc, collection, getFirestore, serverTimestamp} from 'firebase/firestore';
 
 export default function Header() {
 
@@ -17,8 +18,11 @@ export default function Header() {
   const [selectedFile, setSelectedFile] = useState(null);
  const [imageFileUrl, setImageFileUrl] = useState(null);
  const filePickerRef = useRef(null);
- const [imageFileUploading, setImageFileUploading] = useState(false)
- 
+ const [imageFileUploading, setImageFileUploading] = useState(false);
+ const [postUploading, setPostUploading] = useState(false);
+ const [caption, setCaption] = useState('');
+ const db = getFirestore(app);
+
   function addImageToPost(e){
 const file = e.target.files[0];
 if(file){
@@ -65,6 +69,22 @@ uploadTask.on(
 
 }
 
+async function handleSubmit() {
+  setPostUploading(true);
+  const docRef = await addDoc(collection(db, 'posts'),{
+    username: session.user.username,
+    caption,
+    profileImg: session.user.image,
+    image:imageFileUrl,
+    timestamp: serverTimestamp(),
+
+  } );
+
+  setPostUploading(false);
+  setIsOpen(false);
+
+}
+
   return (
     <div className='shadow-sm border-b sticky top-0 bg-white z-30 p-3'>
         <div className='flex justify-between items-center max-w-6xl mx-auto'>
@@ -93,14 +113,14 @@ uploadTask.on(
 
  <div className='flex flex-col justify-center items-center h-[100%]'>
   {selectedFile ? (
-< img onClick={()=> setSelectedFile(null)} src={imageFileUrl} alt='selected file' className={`w-full max-h-[250px] object-over cursor-pointer ${imageFileUploading ? 'animate-pulse' : ''} ``}/>
+< img onClick={()=> setSelectedFile(null)} src={imageFileUrl} alt='selected file' className={`w-full max-h-[250px] object-over cursor-pointer ${imageFileUploading ? 'animate-pulse' : ''} `}/>
   ) :(
  <HiCamera onClick={()=> filePickerRef.current.click()} className='text-5xl text-gray-400  cursor-pointer' />
 )}
  <input hidden ref={filePickerRef} type='file' accept='image/*' onChange={addImageToPost}/>
  </div>
- <input type='text' maxLength={150} placeholder='Please enter your caption' className='m-4 border-none text-center w-full focus:ring-0 outline-none'/>
-  <button  className='w-full bg-red-600 text-white p-2 shadow-md rounded-lg hover:brightness-105 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:hover:brightness-100'>Upload Post</button>
+ <input type='text' maxLength={150} placeholder='Please enter your caption' className='m-4 border-none text-center w-full focus:ring-0 outline-none' onChange={(e)=> setCaption(e.target.value)}/>
+  <button onClick={handleSubmit} disabled = {!selectedFile || caption.trim()=='' || postUploading || imageFileUploading}  className='w-full bg-red-600 text-white p-2 shadow-md rounded-lg hover:brightness-105 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:hover:brightness-100'>Upload Post</button>
   <AiOutlineClose className='cursor-pointer absolute top-2 right-2 hover:text-red-600 transition duration-300' onClick={() => setIsOpen(false) } />
 </Modal>
           )
